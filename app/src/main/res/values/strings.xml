@@ -1,0 +1,43 @@
+<resources>
+    <string name="app_name">DZTram</string>
+    <string name="title_activity_maps">Map</string>
+    <string-array name="Stations">
+        <item>Ruisseau</item>
+        <item>Les Fusillés</item>
+        <item>Tripoli Thaalibia</item>
+        <item>Tripoli Mosquee</item>
+        <item>Tripoli - Hamadéche</item>
+        <item>Tripoli - Magharia</item>
+        <item>Carroubier</item>
+        <item>La Glaciere</item>
+        <item>Pont El Harrach</item>
+        <item>Belle Vue</item>
+        <item>Bekri Bouguera</item>
+        <item>Cinq Maisons</item>
+        <item>Foire Alger</item>
+        <item>Les Pins</item>
+        <item>Tamaris</item>
+        <item>Cité Mokhtar Zerhouni - Les Bananiers</item>
+        <item>Cité Rabi</item>
+        <item>Universite bab Ezzouar</item>
+        <item>Cité 5 juillet</item>
+        <item>Bab Ezzouar Le Pont</item>
+        <item>Cité Universitaire - CUB 1</item>
+        <item>Cité 08 Mai 1945</item>
+        <item>Clair Matin</item>
+        <item>Bordj El Kiffan - Lycee</item>
+        <item>Bordj elKifan - Centre</item>
+        <item>Bordj elKifan - Polyclinique</item>
+        <item>Mouhous</item>
+        <item>Mimouni Hamoud</item>
+        <item>Beni Mrabet</item>
+        <item>Ben Merad</item>
+        <item>Sid Dris</item>
+        <item>Ben Zergua</item>
+        <item>Cafe Chergui</item>
+        <item>Faculté Biomédicale</item>
+        <item>Dergana Cite</item>
+        <item>Dergana Centre</item>
+
+    </string-array>
+</resources>
