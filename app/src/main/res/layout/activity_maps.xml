@@ -25,6 +25,7 @@
             android:layout_marginLeft="25dp"
             android:layout_marginRight="25dp"
             android:layout_marginTop="15dp"
+            android:alpha="0.8"
             android:background="#fff" />
 
         <Spinner
@@ -36,21 +37,34 @@
             android:layout_marginLeft="25dp"
             android:layout_marginRight="25dp"
             android:background="#fff"
+            android:alpha="0.8"
+            style="@style/SpinnerTheme"
             />
 
     </RelativeLayout>
 
     <Button
         android:id="@+id/button2"
-        android:layout_width="wrap_content"
+        android:layout_width="170dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="21dp"
         android:layout_marginRight="21dp"
         android:layout_marginTop="141dp"
-        android:text="Rechrcher"
+        android:text="Distance"
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true" />
+
+    <Switch
+        android:id="@+id/switch1"
+        android:layout_width="100dp"
+        android:layout_height="70dp"
+        android:layout_marginEnd="39dp"
+        android:layout_marginRight="39dp"
+        android:text="Station"
+        android:layout_toLeftOf="@+id/button2"
+        android:layout_alignBottom="@+id/button2"
+        android:layout_alignTop="@+id/button2" />
 
 
 </RelativeLayout>

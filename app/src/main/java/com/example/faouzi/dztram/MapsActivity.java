@@ -1,5 +1,6 @@
 package com.example.faouzi.dztram;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -11,13 +12,16 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
 import android.webkit.ConsoleMessage;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -29,9 +33,11 @@ import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.maps.model.TileOverlayOptions;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -53,6 +59,7 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.logging.ConsoleHandler;
 
+//import static com.example.faouzi.dztram.R.id.button;
 import static com.example.faouzi.dztram.R.id.map;
 import static java.security.AccessController.getContext;
 
@@ -63,6 +70,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private String firstS="Les Fusillés";
     private int second=0;
     private String secondS="Cité Universitaire - CUB 1";
+    final Context context=this;
 
 
     @Override
@@ -165,12 +173,52 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         final Button btn = findViewById(R.id.button2);
         btn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                firstS=spinner.getSelectedItem().toString();
-                secondS=spinner2.getSelectedItem().toString();
-                if (CalculDistance2(firstS,secondS)>1) Toast.makeText(getApplicationContext(),"Distance  : "+CalculDistance2(firstS,secondS),Toast.LENGTH_LONG).show();
-                else if (CalculDistance2(secondS,firstS)>1) Toast.makeText(getApplicationContext(),"Distance  : "+CalculDistance2(secondS,firstS),Toast.LENGTH_LONG).show();
-                else Toast.makeText(getApplicationContext(),"Veuiilez choisir deux stations diferentes " ,Toast.LENGTH_LONG).show();
+                firstS = spinner.getSelectedItem().toString();
+                secondS = spinner2.getSelectedItem().toString();
+                if (btn.getText().equals("Distance")) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(context, android.R.style.Theme_Material_Dialog_Alert);
+                    //if (CalculDistance2(firstS,secondS)>1) Toast.makeText(getApplicationContext(),"Distance  : "+CalculDistance2(firstS,secondS),Toast.LENGTH_LONG).show();
+                    if (CalculDistance2(firstS, secondS) > 1)
+                        builder.setMessage("La distance entre " + firstS + " et " + secondS + " est : " + CalculDistance2(firstS, secondS) + " metres")
+                                .setTitle("Distance");
+                        //else if (CalculDistance2(secondS,firstS)>1) Toast.makeText(getApplicationContext(),"Distance  : "+CalculDistance2(secondS,firstS),Toast.LENGTH_LONG).show();
+                    else if (CalculDistance2(secondS, firstS) > 1)
+                        builder.setMessage("La distance entre " + firstS + " et " + secondS + " est : " + CalculDistance2(secondS, firstS) + " metres")
+                                .setTitle("Distance");
+                    else
+                        Toast.makeText(getApplicationContext(), "Veuiilez choisir deux stations diferentes ", Toast.LENGTH_LONG).show();
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                    dialog.getWindow().setLayout(800, 700);
+                } else {
+                    if (firstS.equals("Dergana Centre")) {
+                        mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(36.772013,3.260286)));
+                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(36.772013,3.260286), 13.0f));
+                    }
+                    else {
+                        mMap.moveCamera(CameraUpdateFactory.newLatLng(readLatLong().get(firstS)));
+                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(readLatLong().get(firstS), 13.0f));
+                    }
+                }
 
+
+            }
+        });
+
+        final Switch sw = findViewById(R.id.switch1);
+        sw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (b) {
+                    spinner2.setVisibility(View.INVISIBLE);
+                    btn.setText("Recherche");
+
+                }
+                else {
+                    spinner2.setVisibility(View.VISIBLE);
+                    btn.setText("Distance");
+
+                }
             }
         });
     }
@@ -268,8 +316,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Toast.makeText(getApplicationContext(), "Error" + e.toString(),
                     Toast.LENGTH_LONG).show();
         }
-
+        dist = round(dist,2);
         return dist;
+    }
+
+    public static double round(double value, int places) {
+        if (places < 0) throw new IllegalArgumentException();
+
+        long factor = (long) Math.pow(10, places);
+        value = value * factor;
+        long tmp = Math.round(value);
+        return (double) tmp / factor;
     }
 
     public double CalculDistance (String s1, String s2){
@@ -402,7 +459,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+
         mMap = googleMap;
+        mMap.setMapType(GoogleMap.MAP_TYPE_NONE);
+
+        mMap.addTileOverlay(new TileOverlayOptions()
+                .tileProvider(new CustomMapTileProvider(getResources().getAssets()))
+                .zIndex(2.0f)
+        );
+
         Bitmap icon = BitmapFactory.decodeResource(this.getResources(),R.drawable.tramicon);
         icon = bitmapSizeByScall(icon, 0.1f);
         icon = bitmapSizeByScall(icon, 0.6f);
@@ -436,6 +501,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.getUiSettings().setMyLocationButtonEnabled(true);
         mMap.getUiSettings().setCompassEnabled(true);
         mMap.getUiSettings().setZoomControlsEnabled(false);
+        mMap.setMaxZoomPreference(14.0f);
+        mMap.setMinZoomPreference(12.0f);
 
         String jsonResult = null;
         try {
@@ -461,9 +528,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Double Long2 = LatNode2.optDouble("longitude");
                 LatLng latLng2 = new LatLng(Lat2,Long2);
                 Polyline line = mMap.addPolyline(new PolylineOptions()
+                        .zIndex(4.0f)
                         .add(latLng,latLng2)
-                        .width(15)
-                        .color(Color.BLUE));
+                        .width(10)
+                        .color(Color.GREEN));
+
             }
         } catch (JSONException e) {
             e.printStackTrace();
