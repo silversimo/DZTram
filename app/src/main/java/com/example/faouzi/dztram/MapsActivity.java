@@ -65,8 +65,10 @@ import static java.security.AccessController.getContext;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
+    private Map<String, Marker> Markers = new HashMap<String, Marker>();
     private GoogleMap mMap;
     private int first=0;
+    private float indx=3.0f;
     private String firstS="Les Fusillés";
     private int second=0;
     private String secondS="Cité Universitaire - CUB 1";
@@ -175,30 +177,52 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onClick(View v) {
                 firstS = spinner.getSelectedItem().toString();
                 secondS = spinner2.getSelectedItem().toString();
-                if (btn.getText().equals("Distance")) {
+                if (btn.getText().equals("Distance") && (firstS.equals(secondS)==false)) {
                     AlertDialog.Builder builder = new AlertDialog.Builder(context, android.R.style.Theme_Material_Dialog_Alert);
                     //if (CalculDistance2(firstS,secondS)>1) Toast.makeText(getApplicationContext(),"Distance  : "+CalculDistance2(firstS,secondS),Toast.LENGTH_LONG).show();
-                    if (CalculDistance2(firstS, secondS) > 1)
-                        builder.setMessage("La distance entre " + firstS + " et " + secondS + " est : " + CalculDistance2(firstS, secondS) + " metres")
-                                .setTitle("Distance");
+                    if (CalculDistance2(firstS, secondS) > 0) {
+                        ColorMap();
+                        ColorPath(firstS,secondS);
+                        mMap.moveCamera(CameraUpdateFactory.newLatLng(readLatLong().get(firstS)));
+                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(readLatLong().get(firstS), 14.0f));
+                        double db=CalculDistance2(firstS, secondS);
+                        builder.setMessage("Distance : " + db + " Km \nDuree de parcours : "+db*4+" min")
+                                .setTitle(firstS +"\n"+ secondS);
+                    }
                         //else if (CalculDistance2(secondS,firstS)>1) Toast.makeText(getApplicationContext(),"Distance  : "+CalculDistance2(secondS,firstS),Toast.LENGTH_LONG).show();
-                    else if (CalculDistance2(secondS, firstS) > 1)
-                        builder.setMessage("La distance entre " + firstS + " et " + secondS + " est : " + CalculDistance2(secondS, firstS) + " metres")
+                    else if (CalculDistance2(secondS, firstS) > 0) {
+                        ColorMap();
+                        ColorPath(secondS,firstS);
+                        mMap.moveCamera(CameraUpdateFactory.newLatLng(readLatLong().get(firstS)));
+                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(readLatLong().get(firstS), 14.0f));
+
+                        builder.setMessage("La distance entre " + firstS + " et " + secondS + " est : " + CalculDistance2(secondS, firstS) + " Km")
                                 .setTitle("Distance");
-                    else
-                        Toast.makeText(getApplicationContext(), "Veuiilez choisir deux stations diferentes ", Toast.LENGTH_LONG).show();
+                    }
+
+                        //Toast.makeText(getApplicationContext(), "Veuiilez choisir deux stations diferentes ", Toast.LENGTH_LONG).show();
+
                     AlertDialog dialog = builder.create();
                     dialog.show();
                     dialog.getWindow().setLayout(800, 700);
-                } else {
+                } else if ((btn.getText().equals("Recherche"))){
                     if (firstS.equals("Dergana Centre")) {
                         mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(36.772013,3.260286)));
-                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(36.772013,3.260286), 13.0f));
+                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(36.772013,3.260286), 14.0f));
+                        Marker mk1;
+                        mk1=Markers.get(firstS);
+                        mk1.showInfoWindow();
                     }
                     else {
                         mMap.moveCamera(CameraUpdateFactory.newLatLng(readLatLong().get(firstS)));
-                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(readLatLong().get(firstS), 13.0f));
+                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(readLatLong().get(firstS), 14.0f));
+                        Marker mk1;
+                        mk1=Markers.get(firstS);
+                        mk1.showInfoWindow();
                     }
+                }else if (firstS.equals(secondS)){
+                    Toast.makeText(getApplicationContext(), "Veuiilez choisir deux stations diferentes ", Toast.LENGTH_LONG).show();
+
                 }
 
 
@@ -271,6 +295,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public Double CalculDistance2 (String s1, String s2){
         String jsonResult = null;
         Double dist=0.0;
+        Boolean bol=false;
         try {
             InputStream is = getAssets().open("tramway.json");
             int size = is.available();
@@ -285,9 +310,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 JSONObject jsonChildNode = jsonMainNode.getJSONObject(i);
                 JSONObject StationNode = jsonChildNode.getJSONObject("A");
                 String name = StationNode.optString("name");
-                Log.d("DISTANCE",name);
-                Log.d("DISTANCE",s1);
-                Log.d("DISTANCE",s2);
+//                Log.d("DISTANCE",name);
+//                Log.d("DISTANCE",s1);
+//                Log.d("DISTANCE",s2);
+                if ((name.equals(s2)) && (bol==false)){
+                    s2=s1;
+                    s1=name;
+                    bol=true;
+                }
                 if (name.equals(s1)) {
                     for (int j=i; j<jsonMainNode.length(); j++){
                         JSONObject jsonChildNode2 = jsonMainNode.getJSONObject(j);
@@ -295,7 +325,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         String name2 = StationNode2.optString("name");
                         dist = dist+jsonChildNode2.optDouble("dist");
                         dist= dist+2.0;
-                        Log.d("INSIDE",dist.toString());
+                        //Log.d("INSIDE",dist.toString());
                         //Log.d("INSIDE",name2);
                         //Log.d("INSIDE",s2);
                         if (name2.equals(s2)) break;
@@ -316,6 +346,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Toast.makeText(getApplicationContext(), "Error" + e.toString(),
                     Toast.LENGTH_LONG).show();
         }
+        dist=dist/1000;
         dist = round(dist,2);
         return dist;
     }
@@ -461,42 +492,31 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
-        mMap.setMapType(GoogleMap.MAP_TYPE_NONE);
-
-        mMap.addTileOverlay(new TileOverlayOptions()
-                .tileProvider(new CustomMapTileProvider(getResources().getAssets()))
-                .zIndex(2.0f)
-        );
+//        mMap.setMapType(GoogleMap.MAP_TYPE_NONE);
+//
+//        mMap.addTileOverlay(new TileOverlayOptions()
+//                .tileProvider(new CustomMapTileProvider(getResources().getAssets()))
+//                .zIndex(2.0f)
+//        );
 
         Bitmap icon = BitmapFactory.decodeResource(this.getResources(),R.drawable.tramicon);
         icon = bitmapSizeByScall(icon, 0.1f);
         icon = bitmapSizeByScall(icon, 0.6f);
         BitmapDescriptor bit = BitmapDescriptorFactory.fromBitmap(icon);
-        // Add a marker in Sydney and move the camera
         Map<String, LatLng> mapy = readLatLong();
 
         for(Map.Entry<String, LatLng> station : mapy.entrySet()) {
             String key = station.getKey();
             LatLng lat = station.getValue();
-            if (lat != null)
-                mMap.addMarker(new MarkerOptions().position(lat).title("\""+key+"\""+" "+lat.latitude+" "+lat.longitude).icon(bit));
-
+            if (lat != null){
+                Marker mk ;
+                mk=mMap.addMarker(new MarkerOptions().position(lat).title(key).icon(bit).snippet("Latitude : "+lat.latitude+", Longitude : "+lat.longitude));
+                Markers.put(key,mk);
+            }
         }
-        //};
-//        LatLng sydney = new LatLng(36.742971, 3.083471);
-//        MarkerOptions opt = new MarkerOptions();
-//
-//        opt.position(sydney).title("Ruisseau");
-//        opt.icon(bit);
-//        mMap.addMarker(opt);
-//        LatLng sydney1 = new LatLng(36.746036,3.086786);
-//        mMap.addMarker(new MarkerOptions().position(sydney1).title("Les Fusillés").icon(bit));
-//        LatLng sydney2 = new LatLng(36.745159, 3.092308);
-//        mMap.addMarker(new MarkerOptions().position(sydney2).title("Tripoli -Thaalibia").icon(bit));
-//        LatLng sydney3 = new LatLng(36.743194, 3.097510);
-//        mMap.addMarker(new MarkerOptions().position(sydney3).title("Tripoli - Mosqué").icon(bit));
+
         mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(36.746036, 3.086786)));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(36.746036, 3.086786), 13.0f));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(36.746036, 3.086786), 14.0f));
         mMap.getUiSettings().setMapToolbarEnabled(true);
         mMap.getUiSettings().setMyLocationButtonEnabled(true);
         mMap.getUiSettings().setCompassEnabled(true);
@@ -560,5 +580,112 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Math.round(bitmapIn.getHeight() * scall_zero_to_one_f), false);
 
         return bitmapOut;
+    }
+
+    public void ColorMap(){
+        String jsonResult = null;
+        try {
+            InputStream is = getAssets().open("tramway.json");
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+            jsonResult = new String(buffer, "UTF-8");
+            //jsonResult = new Scanner(new File("Json/Tramway.json")).useDelimiter("\\Z").next();
+            JSONObject jsonResponse = new JSONObject(jsonResult);
+            JSONArray jsonMainNode = jsonResponse.optJSONArray("Content");
+            for (int i = 0; i < jsonMainNode.length(); i++) {
+                JSONObject jsonChildNode = jsonMainNode.getJSONObject(i);
+                JSONObject StationNode = jsonChildNode.getJSONObject("A");
+                JSONObject LatNode = StationNode.getJSONObject("LatLong");
+                Double Lat = LatNode.optDouble("latitude");
+                Double Long = LatNode.optDouble("longitude");
+                LatLng latLng = new LatLng(Lat,Long);
+                JSONObject StationNode2 = jsonChildNode.getJSONObject("B");
+                JSONObject LatNode2 = StationNode2.getJSONObject("LatLong");
+                Double Lat2 = LatNode2.optDouble("latitude");
+                Double Long2 = LatNode2.optDouble("longitude");
+                LatLng latLng2 = new LatLng(Lat2,Long2);
+                Polyline line = mMap.addPolyline(new PolylineOptions()
+                        .zIndex(indx++)
+                        .add(latLng,latLng2)
+                        .width(10)
+                        .color(Color.GREEN));
+
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(), "Error" + e.toString(),
+                    Toast.LENGTH_LONG).show();
+        }catch (FileNotFoundException e) {
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(), "Error" + e.toString(),
+                    Toast.LENGTH_LONG).show();
+        }catch (IOException e){
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(), "Error" + e.toString(),
+                    Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public void ColorPath(String stat1,String stat2){
+        boolean bol=false;
+        String jsonResult = null;
+        String name2= "";
+        try {
+            InputStream is = getAssets().open("tramway.json");
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+            jsonResult = new String(buffer, "UTF-8");
+            //jsonResult = new Scanner(new File("Json/Tramway.json")).useDelimiter("\\Z").next();
+            JSONObject jsonResponse = new JSONObject(jsonResult);
+            JSONArray jsonMainNode = jsonResponse.optJSONArray("Content");
+            for (int i = 0; i < jsonMainNode.length(); i++) {
+                JSONObject jsonChildNode2 = jsonMainNode.getJSONObject(i);
+                JSONObject StationNode2 = jsonChildNode2.getJSONObject("A");
+                String name = StationNode2.optString("name");
+                if (stat2.equals(name) && bol==false){
+                    stat2=stat1;
+                    stat1=name;
+                    bol=true;
+                }
+                if (stat1.equals(name)) {
+                    int j=i;
+                    while (name2.equals(stat2)==false) {
+                        JSONObject jsonChildNode = jsonMainNode.getJSONObject(j);
+                        JSONObject StationNode = jsonChildNode.getJSONObject("A");
+                        JSONObject LatNode = StationNode.getJSONObject("LatLong");
+                        Double Lat = LatNode.optDouble("latitude");
+                        Double Long = LatNode.optDouble("longitude");
+                        LatLng latLng = new LatLng(Lat, Long);
+                        JSONObject StationNode3 = jsonChildNode.getJSONObject("B");
+                        name2 = StationNode3.optString("name");
+                        JSONObject LatNode2 = StationNode3.getJSONObject("LatLong");
+                        Double Lat2 = LatNode2.optDouble("latitude");
+                        Double Long2 = LatNode2.optDouble("longitude");
+                        LatLng latLng2 = new LatLng(Lat2, Long2);
+                        Polyline line = mMap.addPolyline(new PolylineOptions()
+                                .zIndex(indx++)
+                                .add(latLng, latLng2)
+                                .width(14)
+                                .color(Color.RED));
+                        if (j<jsonMainNode.length()) j++;
+
+                    }
+                }
+                if (name2.equals(stat2)) break;
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(), "Error" + e.toString(), Toast.LENGTH_LONG).show();
+        }catch (FileNotFoundException e) {
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(), "Error" + e.toString(), Toast.LENGTH_LONG).show();
+        }catch (IOException e){
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(), "Error" + e.toString(), Toast.LENGTH_LONG).show();
+        }
     }
 }
